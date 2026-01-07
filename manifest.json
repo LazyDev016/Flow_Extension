@@ -1,24 +1,17 @@
 {
+  "name": "Flow Timer",
+  "version": "1.0",
   "manifest_version": 3,
-  "name": "Focus Pomodoro Timer",
-  "version": "2.0",
-  "description": "Professional Pomodoro timer with analytics, settings, and export",
+  "permissions": [
+    "storage",
+    "notifications",
+    "alarms" 
+  ],
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage",
-    "notifications"],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
-    }
-  },
-  "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "default_icon": "icon.png"
   }
 }

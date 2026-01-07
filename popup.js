@@ -1,95 +1,110 @@
 // popup.js
 
-// === Constants & Setup ===
+// === DOM ELEMENTS ===
+const timerDisplay = document.getElementById('timer');
+const phaseLabel = document.getElementById('phaseLabel');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const sessionCountDisplay = document.getElementById('sessionCountDisplay');
+const progressDots = document.getElementById('progressDots');
 const menuBtn = document.getElementById('menuBtn');
 const optionsPanel = document.getElementById('optionsPanel');
 
-const STORAGE_KEYS = {
-  SETTINGS: 'pomodoroSettings',
-  SESSIONS: 'pomodoroSessions'
-};
-
-// State (Local mirrors of background state)
-let analyticsFilter = 'day';
-
-// DOM Elements
-const timerDisplay = document.getElementById('timer');
-const phaseLabel = document.getElementById('phaseLabel');
-const progressDots = document.getElementById('progressDots');
-const sessionTypeEl = document.getElementById('sessionType');
-const sessionCountDisplay = document.getElementById('sessionCountDisplay');
-
-const playPauseBtn = document.getElementById('playPauseBtn');
-const resetBtn = document.getElementById('resetBtn');
-
+// Inputs
 const focusInput = document.getElementById('focusDurationInput');
 const breakInput = document.getElementById('breakDurationInput');
 const sessionInput = document.getElementById('sessionCountInput');
 
-const totalTimeEl = document.getElementById('totalTime');
-const sessionsCompletedEl = document.getElementById('sessionsCompleted');
-const statBarFill = document.getElementById('statBarFill');
-const syncIndicator = document.getElementById('syncIndicator');
+// === 1. DISPLAY LOGIC (The "Reader") ===
 
-const toast = document.getElementById('toast');
-const analyticsTabs = document.querySelectorAll('.analytics-tab');
-const exportBtn = document.getElementById('exportBtn');
-
-// === 1. Sync & Communication Logic ===
-
-// Helper to format 00:00
-function formatTime(m, s) {
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+function formatTime(ms) {
+  const totalSeconds = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+  const s = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
 }
 
-// Function to update the UI based on data from background.js
 function updateUI(state) {
   if (!state) return;
 
-  // Time & Labels
-  timerDisplay.textContent = formatTime(state.minutes, state.seconds);
-  phaseLabel.textContent = state.phase === 'focus' ? 'Focus' : 'Break';
-  sessionTypeEl.textContent = state.phase === 'focus' ? 'Focus Session' : 'Break Time';
-  sessionCountDisplay.textContent = `${state.sessionCount} of ${state.totalSessions}`;
+  // Calculate milliseconds to show
+  let displayMs = state.remainingTime;
+  if (state.isRunning && state.targetTime) {
+    displayMs = Math.max(0, state.targetTime - Date.now());
+  }
 
-  // Button States
+  // Update Text
+  timerDisplay.textContent = formatTime(displayMs);
+  phaseLabel.textContent = state.phase === 'focus' ? 'Focus' : 'Break';
+  
+  if (sessionCountDisplay) {
+    sessionCountDisplay.textContent = `${state.sessionCount} of ${state.settings.sessions}`;
+  }
+
+  // Update Buttons & Visuals
   if (state.isRunning) {
     playPauseBtn.classList.add('primary');
-    playPauseBtn.innerHTML = '&#10074;&#10074;'; // Pause icon
+    playPauseBtn.innerHTML = '&#10074;&#10074;'; // Pause Symbol
     timerDisplay.classList.add('running');
   } else {
     playPauseBtn.classList.remove('primary');
-    playPauseBtn.innerHTML = '&#9658;'; // Play icon
+    playPauseBtn.innerHTML = '&#9658;'; // Play Symbol
     timerDisplay.classList.remove('running');
   }
-
-  // Progress Dots
-  renderProgressDots(state.sessionCount, state.totalSessions);
+  
+  renderDots(state.sessionCount, state.settings.sessions);
 }
 
-// Poll the background script every second to keep UI updated
+function renderDots(current, total) {
+  if (!progressDots) return;
+  progressDots.innerHTML = '';
+  // CSS handles the connecting line via ::before
+  for (let i = 1; i <= total; i++) {
+    const dot = document.createElement('div');
+    let cls = 'dot';
+    if (i < current) cls += ' completed';
+    else if (i === current) cls += ' active';
+    else cls += ' upcoming';
+    dot.className = cls;
+    progressDots.appendChild(dot);
+  }
+}
+
+// === 2. MAIN LOOP (Updates UI every second) ===
+
+// Poll storage every second to update the countdown
 setInterval(() => {
-  chrome.runtime.sendMessage({ action: 'GET_STATUS' }, (response) => {
-    updateUI(response);
+  chrome.storage.local.get(['timerState'], (res) => {
+    if (res.timerState) {
+      updateUI(res.timerState);
+    }
   });
 }, 1000);
 
-// Initialize on load
-chrome.runtime.sendMessage({ action: 'GET_STATUS' }, (response) => {
-  updateUI(response);
-  loadSettingsUI(); // Fill inputs with stored values
-  updateAnalytics();
+// Initial Load on Popup Open
+chrome.storage.local.get(['timerState'], (res) => {
+  if (res.timerState) {
+    const s = res.timerState;
+    updateUI(s);
+    // Init Inputs
+    if(focusInput) focusInput.value = s.settings.focus;
+    if(breakInput) breakInput.value = s.settings.break;
+    if(sessionInput) sessionInput.value = s.settings.sessions;
+  } else {
+    // If empty, ask background to init
+    chrome.runtime.sendMessage({ action: 'GET_STATUS' });
+  }
 });
 
-// === 2. Control Buttons (Sending Commands) ===
+// === 3. BUTTON CLICK HANDLERS ===
 
 playPauseBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: 'GET_STATUS' }, (state) => {
-    const action = state.isRunning ? 'STOP' : 'START';
+  chrome.storage.local.get(['timerState'], (res) => {
+    const s = res.timerState;
+    const action = (s && s.isRunning) ? 'STOP' : 'START';
     chrome.runtime.sendMessage({ action: action }, (newState) => {
       updateUI(newState);
-      // Play sound effect locally for immediate feedback
-      playClickSound(); 
+      playClickSound();
     });
   });
 });
@@ -100,33 +115,46 @@ resetBtn.addEventListener('click', () => {
   });
 });
 
-// === 3. Visual Helpers ===
+// Toggle Settings Menu
+menuBtn.addEventListener('click', () => {
+  optionsPanel.classList.toggle('hidden');
+});
 
-function renderProgressDots(current, total) {
-  progressDots.innerHTML = '';
-  // Connector line is handled in CSS via ::before
-  for (let i = 1; i <= total; i++) {
-    const dot = document.createElement('div');
-    let className = 'dot';
-    if (i < current) className += ' completed';
-    else if (i === current) className += ' active';
-    else className += ' upcoming';
+// === 4. STEPPER LOGIC (Settings) ===
+
+document.querySelectorAll('.stepper-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const action = e.currentTarget.dataset.action;
+    const target = e.currentTarget.dataset.target;
     
-    dot.className = className;
-    progressDots.appendChild(dot);
-  }
-}
+    // Map targets to inputs
+    const input = target === 'focus' ? focusInput : 
+                  target === 'break' ? breakInput : sessionInput;
+                  
+    let val = parseInt(input.value);
+    if (action === 'increase') val++;
+    else val--;
+    
+    // Clamp values (Min 1, Max 60 for minutes, Max 12 for sessions)
+    val = Math.max(1, val);
+    if(target !== 'sessions') val = Math.min(60, val);
+    if(target === 'sessions') val = Math.min(12, val);
 
-function showSyncStatus() {
-  syncIndicator.classList.add('saving');
-  syncIndicator.querySelector('.sync-text').textContent = 'Saving...';
-  setTimeout(() => {
-    syncIndicator.classList.remove('saving');
-    syncIndicator.querySelector('.sync-text').textContent = 'Saved';
-  }, 800);
-}
+    input.value = val;
 
-// Simple Click Sound (AudioContext)
+    // Send update to background
+    chrome.runtime.sendMessage({
+      action: 'UPDATE_SETTINGS',
+      payload: {
+        focus: parseInt(focusInput.value),
+        break: parseInt(breakInput.value),
+        sessions: parseInt(sessionInput.value)
+      }
+    }, (newState) => updateUI(newState));
+  });
+});
+
+// === 5. SOUND UTILS ===
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playClickSound() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -141,126 +169,7 @@ function playClickSound() {
   osc.stop(audioCtx.currentTime + 0.1);
 }
 
-// === 4. Settings & Steppers Logic ===
-
-function loadSettingsUI() {
-  chrome.storage.local.get([STORAGE_KEYS.SETTINGS], (res) => {
-    if (res[STORAGE_KEYS.SETTINGS]) {
-      const s = res[STORAGE_KEYS.SETTINGS];
-      focusInput.value = s.focusDuration || 25;
-      breakInput.value = s.breakDuration || 5;
-      sessionInput.value = s.sessionCount || 4;
-      
-      // Sync these loaded settings to background immediately
-      notifyBackgroundSettingsChange();
-    }
-  });
-}
-
-function saveSettingsToStorage() {
-  const settings = {
-    focusDuration: parseInt(focusInput.value),
-    breakDuration: parseInt(breakInput.value),
-    sessionCount: parseInt(sessionInput.value)
-  };
-  chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: settings });
-  notifyBackgroundSettingsChange();
-  showSyncStatus();
-}
-
-function notifyBackgroundSettingsChange() {
-  chrome.runtime.sendMessage({
-    action: 'UPDATE_SETTINGS',
-    payload: {
-      focus: parseInt(focusInput.value),
-      break: parseInt(breakInput.value),
-      sessions: parseInt(sessionInput.value)
-    }
-  }, (response) => updateUI(response));
-}
-
-// Stepper Event Listeners
-document.querySelectorAll('.stepper-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const action = e.currentTarget.dataset.action; // 'increase' or 'decrease'
-    const target = e.currentTarget.dataset.target; // 'focus', 'break', 'sessions'
-    const inputMap = {
-      'focus': focusInput,
-      'break': breakInput,
-      'sessions': sessionInput
-    };
-    const input = inputMap[target];
-    let val = parseInt(input.value);
-
-    // Update Value
-    if (action === 'increase') val++;
-    else val--;
-
-    // Clamp Values
-    if (target === 'focus') val = Math.max(1, Math.min(60, val));
-    if (target === 'break') val = Math.max(1, Math.min(30, val));
-    if (target === 'sessions') val = Math.max(1, Math.min(12, val));
-
-    input.value = val;
-    saveSettingsToStorage();
-  });
-});
-
-// === 5. Analytics Logic ===
-
-function isSameDay(d1, d2) {
-  return d1.getDate() === d2.getDate() && 
-         d1.getMonth() === d2.getMonth() && 
-         d1.getFullYear() === d2.getFullYear();
-}
-
-function updateAnalytics() {
-  chrome.storage.local.get([STORAGE_KEYS.SESSIONS], (res) => {
-    const sessions = res[STORAGE_KEYS.SESSIONS] || [];
-    const now = new Date();
-    
-    // Filter sessions based on current filter (simplified for 'day' vs others)
-    let filtered = sessions.filter(entry => {
-      const d = new Date(entry.date);
-      if (analyticsFilter === 'day') return isSameDay(d, now);
-      // Add week/month logic here if needed
-      return true; 
-    });
-
-    let totalSeconds = filtered.reduce((sum, e) => sum + e.focusDuration, 0);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-    totalTimeEl.textContent = `${hours}h ${minutes}m`;
-    sessionsCompletedEl.textContent = filtered.length.toString();
-
-    // Visual Bar (Goal: 4 hours)
-    const goalSeconds = 4 * 3600;
-    const pct = Math.min((totalSeconds / goalSeconds) * 100, 100);
-    statBarFill.style.width = `${pct}%`;
-  });
-}
-
-// Analytics Tabs
-analyticsTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    analyticsTabs.forEach(t => {
-      t.classList.remove('active');
-      t.setAttribute('aria-selected', 'false');
-    });
-    tab.classList.add('active');
-    tab.setAttribute('aria-selected', 'true');
-    analyticsFilter = tab.getAttribute('data-filter');
-    updateAnalytics();
-  });
-});
-
-// Menu Toggle
-menuBtn.addEventListener('click', () => {
-  optionsPanel.classList.toggle('hidden');
-});
-
-// Keyboard Shortcuts
+// === 6. KEYBOARD SHORTCUTS ===
 document.addEventListener('keydown', (e) => {
   if (e.target.matches('input')) return;
   if (e.code === 'Space') { e.preventDefault(); playPauseBtn.click(); }
