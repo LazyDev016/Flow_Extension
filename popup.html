@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Focus Pomodoro</title>
+<link rel="stylesheet" href="style.css">
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-title">Flow</div>
+      <div class="sync-indicator" id="syncIndicator">
+        <span class="sync-dot"></span>
+        <span class="sync-text">Saved</span>
+      </div>
+      <button id="menuBtn" class="menu-btn" aria-label="Open settings">⚙️</button>
+    </header>
+
+    <section class="timer-section">
+      <div class="timer-label" id="phaseLabel">Focus</div>
+      <div class="timer-display" id="timer">25:00</div>
+      
+      <div class="timer-context">
+        <span id="sessionType">Focus Session</span>
+        <span class="separator">•</span>
+        <span id="sessionCountDisplay">1 of 4</span>
+      </div>
+    </section>
+
+    <div class="timer-controls">
+      <button id="playPauseBtn" class="control-btn primary" aria-label="Start timer">&#9658;</button>
+      <button id="resetBtn" class="control-btn" aria-label="Reset timer">&#8635;</button>
+    </div>
+
+    <div class="progress-dots" id="progressDots"></div>
+
+    <div id="optionsPanel" class="options-panel hidden">
+      
+      <div class="panel-section">
+        <h3 class="panel-heading">Settings</h3>
+        
+        <div class="setting-row">
+          <label class="setting-label">Focus duration</label>
+          <div class="stepper">
+            <button class="stepper-btn" data-action="decrease" data-target="focus">−</button>
+            <input id="focusDurationInput" class="stepper-input" type="text" readonly value="25" />
+            <button class="stepper-btn" data-action="increase" data-target="focus">+</button>
+            <span class="stepper-unit">min</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Break duration</label>
+          <div class="stepper">
+            <button class="stepper-btn" data-action="decrease" data-target="break">−</button>
+            <input id="breakDurationInput" class="stepper-input" type="text" readonly value="5" />
+            <button class="stepper-btn" data-action="increase" data-target="break">+</button>
+            <span class="stepper-unit">min</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Sessions</label>
+          <div class="stepper">
+            <button class="stepper-btn" data-action="decrease" data-target="sessions">−</button>
+            <input id="sessionCountInput" class="stepper-input" type="text" readonly value="4" />
+            <button class="stepper-btn" data-action="increase" data-target="sessions">+</button>
+            <span class="stepper-unit">#</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3 class="panel-heading">Analytics</h3>
+        
+        <nav class="analytics-tabs">
+          <button class="analytics-tab active" data-filter="day">Day</button>
+          <button class="analytics-tab" data-filter="week">Week</button>
+          <button class="analytics-tab" data-filter="month">Month</button>
+          <button class="analytics-tab" data-filter="year">Year</button>
+        </nav>
+
+        <div class="analytics-stats">
+          <div class="stat-row">
+            <div class="stat-label">Total study time</div>
+            <div class="stat-value" id="totalTime">0h 0m</div>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" id="statBarFill"></div>
+          </div>
+          
+          <div class="stat-row">
+            <div class="stat-label">Sessions completed</div>
+            <div class="stat-value" id="sessionsCompleted">0</div>
+          </div>
+        </div>
+
+        <button id="exportBtn" class="export-btn">Export Data</button>
+      </div>
+    </div>
+    
+    <div class="keyboard-hints">
+      <span><kbd>Space</kbd> Play/Pause</span>
+      <span><kbd>R</kbd> Reset</span>
+      <span><kbd>S</kbd> Settings</span>
+    </div>
+
+    <div id="toast" class="toast">Session Complete!</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
