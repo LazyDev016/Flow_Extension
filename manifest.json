@@ -3,7 +3,11 @@
   "name": "Focus Pomodoro Timer",
   "version": "2.0",
   "description": "Professional Pomodoro timer with analytics, settings, and export",
-  "permissions": ["storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage",
+    "notifications"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
