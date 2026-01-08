@@ -1,114 +1,121 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Focus Pomodoro</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-  <div class="app">
-    <header class="app-header">
-      <div class="app-title">Flow</div>
-      <div class="sync-indicator" id="syncIndicator">
-        <span class="sync-dot"></span>
-        <span class="sync-text">Saved</span>
-      </div>
-      <button id="menuBtn" class="menu-btn" aria-label="Open settings">⚙️</button>
-    </header>
 
-    <section class="timer-section">
-      <div class="timer-label" id="phaseLabel">Focus</div>
-      <div class="timer-display" id="timer">25:00</div>
+  <div class="app-container">
+    <div class="app">
       
-      <div class="timer-context">
-        <span id="sessionType">Focus Session</span>
-        <span class="separator">•</span>
-        <span id="sessionCountDisplay">1 of 4</span>
-      </div>
-    </section>
+      <header class="app-header">
+        <div class="sync-status synced">
+          <div class="sync-dot"></div>
+          <span>SYNCED</span>
+        </div>
+        <div class="app-title">Flow</div>
+        <button class="menu-btn" id="menuBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </header>
 
-    <div class="timer-controls">
-      <button id="playPauseBtn" class="control-btn primary" aria-label="Start timer">&#9658;</button>
-      <button id="resetBtn" class="control-btn" aria-label="Reset timer">&#8635;</button>
+      <main class="timer-section">
+        <div class="timer-label" id="phaseLabel">FOCUS</div>
+        
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        
+        <div class="timer-context">
+          <span id="sessionType">Focus Session</span>
+          <span class="round-indicator" id="sessionCountDisplay">1 of 4</span>
+        </div>
+      </main>
+
+      <div class="timer-controls">
+        <button class="control-btn secondary" id="resetBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        </button>
+        
+        <button class="control-btn primary" id="playPauseBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </button>
+      </div>
+
+       <div class="progress-dots" id="progressDots"></div>
+
+      <footer class="keyboard-hints">
+        <div class="hint"><kbd>SPACE</kbd> Play/Pause</div>
+        <div class="hint"><kbd>R</kbd> Reset</div>
+      </footer>
     </div>
 
-    <div class="progress-dots" id="progressDots"></div>
+    <div class="settings-panel" id="settingsPanel">
+      <div class="panel-content">
+        <div class="panel-header">
+          <span class="panel-title">Settings</span>
+          <button class="close-btn" id="closeSettingsBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
 
-    <div id="optionsPanel" class="options-panel hidden">
-      
-      <div class="panel-section">
-        <h3 class="panel-heading">Settings</h3>
-        
-        <div class="setting-row">
-          <label class="setting-label">Focus duration</label>
+        <div class="settings-row">
+          <span class="settings-label">Focus</span>
           <div class="stepper">
-            <button class="stepper-btn" data-action="decrease" data-target="focus">−</button>
-            <input id="focusDurationInput" class="stepper-input" type="text" readonly value="25" />
-            <button class="stepper-btn" data-action="increase" data-target="focus">+</button>
+            <button class="stepper-btn" data-action="dec" data-target="focus">-</button>
+            <input class="stepper-value" id="focusInput" value="25" readonly>
             <span class="stepper-unit">min</span>
+            <button class="stepper-btn" data-action="inc" data-target="focus">+</button>
           </div>
         </div>
 
-        <div class="setting-row">
-          <label class="setting-label">Break duration</label>
+        <div class="settings-row">
+          <span class="settings-label">Break</span>
           <div class="stepper">
-            <button class="stepper-btn" data-action="decrease" data-target="break">−</button>
-            <input id="breakDurationInput" class="stepper-input" type="text" readonly value="5" />
-            <button class="stepper-btn" data-action="increase" data-target="break">+</button>
+            <button class="stepper-btn" data-action="dec" data-target="break">-</button>
+            <input class="stepper-value" id="breakInput" value="5" readonly>
             <span class="stepper-unit">min</span>
+            <button class="stepper-btn" data-action="inc" data-target="break">+</button>
           </div>
         </div>
 
-        <div class="setting-row">
-          <label class="setting-label">Sessions</label>
+        <div class="settings-row">
+          <span class="settings-label">Sessions</span>
           <div class="stepper">
-            <button class="stepper-btn" data-action="decrease" data-target="sessions">−</button>
-            <input id="sessionCountInput" class="stepper-input" type="text" readonly value="4" />
-            <button class="stepper-btn" data-action="increase" data-target="sessions">+</button>
+            <button class="stepper-btn" data-action="dec" data-target="sessions">-</button>
+            <input class="stepper-value" id="sessionInput" value="4" readonly>
             <span class="stepper-unit">#</span>
+            <button class="stepper-btn" data-action="inc" data-target="sessions">+</button>
           </div>
         </div>
-      </div>
 
-      <div class="panel-section">
-        <h3 class="panel-heading">Analytics</h3>
-        
-        <nav class="analytics-tabs">
-          <button class="analytics-tab active" data-filter="day">Day</button>
-          <button class="analytics-tab" data-filter="week">Week</button>
-          <button class="analytics-tab" data-filter="month">Month</button>
-          <button class="analytics-tab" data-filter="year">Year</button>
-        </nav>
+        <div class="analytics-tabs">
+          <button class="tab-btn active" data-filter="day">Day</button>
+          <button class="tab-btn" data-filter="week">Week</button>
+          <button class="tab-btn" data-filter="month">Month</button>
+        </div>
 
-        <div class="analytics-stats">
+        <div class="stats-group">
           <div class="stat-row">
-            <div class="stat-label">Total study time</div>
-            <div class="stat-value" id="totalTime">0h 0m</div>
+            <span class="stat-label">Total Time</span>
+            <span class="stat-value" id="totalTime">0h 0m</span>
           </div>
           <div class="stat-bar">
-            <div class="stat-bar-fill" id="statBarFill"></div>
-          </div>
-          
-          <div class="stat-row">
-            <div class="stat-label">Sessions completed</div>
-            <div class="stat-value" id="sessionsCompleted">0</div>
+            <div class="stat-fill" id="statFill" style="width: 0%"></div>
           </div>
         </div>
 
-        <button id="exportBtn" class="export-btn">Export Data</button>
+        <button class="export-btn" id="exportBtn">
+           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+           Export Data
+        </button>
       </div>
     </div>
-    
-    <div class="keyboard-hints">
-      <span><kbd>Space</kbd> Play/Pause</span>
-      <span><kbd>R</kbd> Reset</span>
-      <span><kbd>S</kbd> Settings</span>
-    </div>
 
-    <div id="toast" class="toast">Session Complete!</div>
+    <div class="toast" id="toast">Saved</div>
   </div>
-
+  
   <script src="popup.js"></script>
 </body>
 </html>
